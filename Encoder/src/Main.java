@@ -18,15 +18,23 @@ public class Main {
         System.out.print("Enter the plaintext: ");
         String plainText = scanner.nextLine();
         
-    
+        // Initialize the dictionary
+        encoderDecoder.initializeDictionary();
+
+
         String encodedText = encoderDecoder.encode(plainText);
         System.out.println("Encoded: " + offset + encodedText);
     
-        String decodedText = encoderDecoder.decode(encodedText);
-        System.out.println("Decoded: " + offset + decodedText);
+        System.out.print("Do you want to decode the encoded text? (yes/no): ");
+        String choice = scanner.nextLine().trim().toLowerCase();
+        
+        if (choice.equals("yes")) {
+            String decodedText = encoderDecoder.decode(encodedText);
+            System.out.println("Decoded: " + decodedText);
+        } else {
+            System.out.println("Okay, not decoding the text.");
+        }
     
         scanner.close();
     }
 }
-
-

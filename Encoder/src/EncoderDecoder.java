@@ -1,5 +1,16 @@
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
+
 class EncoderDecoder { 
     private static final String originalReferenceTable = "ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789()*+,-./";
+
+    private static final String DICTIONARY_FILE_PATH = "/Users/USER/Desktop/Encoder Assignment/Encoder/english_dictionary.txt"; // Change to the path of your dictionary file
+
+    private static Set<String> dictionary;
+
     private String referenceTable;
 
     //Shifting of table based on offset character
@@ -21,31 +32,69 @@ class EncoderDecoder {
     }
 
     public String encode(String plainText) {
-        char[] encodedText = new char[plainText.length()];
-        for (int i = 0; i < plainText.length(); i++) {
-            char c = plainText.charAt(i);
-            int index = originalReferenceTable.indexOf(Character.toUpperCase(c));
-            if (index != -1) {
-                encodedText[i] = referenceTable.charAt(index);
-            } else {
-                encodedText[i] = c; // If character is not in referenceTable, keep it unchanged. 
+        StringBuilder encodedText = new StringBuilder();
+            for (int i = 0; i < plainText.length(); i++) {
+                char c = plainText.charAt(i);
+                int index = originalReferenceTable.indexOf(Character.toUpperCase(c));
+                if (index != -1) {
+                    encodedText.append(referenceTable.charAt(index));
+                } else {
+                    encodedText.append(c); // If character is not in referenceTable, keep it unchanged.
+                }
             }
+            return encodedText.toString();
         }
-        return new String(encodedText);
-    }
 
 
     public String decode(String encodedText) {
-        char[] decodedText = new char[encodedText.length()];
-        for (int i = 0; i < encodedText.length(); i++) {
-            char c = encodedText.charAt(i);
-            int index = referenceTable.indexOf(Character.toUpperCase(c));
-            if (index != -1) {
-                decodedText[i] = originalReferenceTable.charAt(index);
-            } else {
-                decodedText[i] = c; // If character is not in referenceTable, keep it unchanged
+        for (int offsetAttempt = 0; offsetAttempt < originalReferenceTable.length(); offsetAttempt++) {
+            char offset = originalReferenceTable.charAt(offsetAttempt);
+            String decodedText = decodeWithReferenceTable(encodedText, offset);
+    
+            // Check if the decoded text contains valid characters or words
+            if (isValidDecodedText(decodedText)) {
+                return decodedText;
             }
         }
-        return new String(decodedText);
+    
+        return "Decoding failed. Unable to find a valid result in English.";
     }
+
+    private String decodeWithReferenceTable(String encodedText, char offset) {
+        StringBuilder decodedText = new StringBuilder();
+        for (char c : encodedText.toCharArray()) {
+            int index = originalReferenceTable.indexOf(c);
+            if (index != -1) {
+                int decodedIndex = (index - originalReferenceTable.indexOf(offset) + originalReferenceTable.length()) % originalReferenceTable.length();
+                // calculates the index of the decoded character in the originalReferenceTable
+                decodedText.append(originalReferenceTable.charAt(decodedIndex));
+            } else {
+                decodedText.append(c);
+            }
+        }
+        return decodedText.toString();
+    }
+    
+    public void initializeDictionary() {
+        dictionary = new HashSet<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(DICTIONARY_FILE_PATH))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                dictionary.add(line.toUpperCase()); // Store words in uppercase for case-insensitive comparison
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading the dictionary file: " + e.getMessage());
+        }
+    }
+
+    private static boolean isValidDecodedText(String decodedText) {
+        String[] words = decodedText.split("\\s+"); // Split the decoded text into words
+        for (String word : words) {
+            if (!dictionary.contains(word.toUpperCase())) {
+                return false; // If any word is not in the dictionary, consider it invalid
+            }
+        }
+        return true; // All words are valid according to the dictionary
+    }
+
 }
